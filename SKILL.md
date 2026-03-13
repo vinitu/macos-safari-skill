@@ -1,9 +1,9 @@
 ---
-name: apple-safari
+name: macos-safari
 description: Automate Safari on macOS using AppleScript. Use for opening URLs, reading page content, managing tabs/windows, executing JavaScript, and searching bookmarks/history. Triggers on queries about browsing, web pages, Safari tabs, bookmarks, or web automation.
 ---
 
-# Safari Automation
+# macOS Safari Automation
 
 Control Safari on macOS using AppleScript via the `osascript` command.
 

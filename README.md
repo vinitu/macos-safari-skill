@@ -1,4 +1,4 @@
-# Apple Safari Skill
+# macOS Safari Skill
 
 This repo stores a skill for automating Safari on macOS using AppleScript.
 
@@ -7,13 +7,13 @@ This repo stores a skill for automating Safari on macOS using AppleScript.
 Install with `skills.sh`:
 
 ```bash
-skills.sh add vinitu/apple-safari-skill
+skills.sh add vinitu/macos-safari-skill
 ```
 
 If you use the npm installer instead:
 
 ```bash
-npx skills add vinitu/apple-safari-skill
+npx skills add vinitu/macos-safari-skill
 ```
 
 ## Scope

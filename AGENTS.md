@@ -1,6 +1,6 @@
 # Repo Guide
 
-This repo stores a skill for automating Safari on macOS.
+This repo stores a skill for automating macOS Safari.
 
 ## Goal
 
