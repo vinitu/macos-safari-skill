@@ -4,16 +4,14 @@ This repo stores a skill for automating Safari on macOS using AppleScript.
 
 ## Installation
 
-Install with `skills.sh`:
+```bash
+npx skills add vinitu/macos-safari-skill
+```
+
+Or with [skills.sh](https://skills.sh):
 
 ```bash
 skills.sh add vinitu/macos-safari-skill
-```
-
-If you use the npm installer instead:
-
-```bash
-npx skills add vinitu/macos-safari-skill
 ```
 
 ## Scope
@@ -33,24 +31,27 @@ npx skills add vinitu/macos-safari-skill
 
 ## How To Use
 
+From the skill directory (or path where scripts are installed):
+
 ```bash
-# Open a URL in a new tab
-osascript -e 'tell application "Safari" to tell front window to set current tab to (make new tab with properties {URL:"https://example.com"})'
+# Open URL in new tab (or current-tab, new-window)
+osascript scripts/url/open.applescript "https://example.com" new-tab
+# Get URL of current tab
+osascript scripts/tab/url.applescript
+# Get title of current tab
+osascript scripts/tab/title.applescript
+# Run JavaScript in current tab; returns result
+osascript scripts/javascript/run.applescript "document.body.innerText"
+```
 
-# Get the current page URL
-osascript -e 'tell application "Safari" to return URL of current tab of front window'
+Browsing history is read via SQLite (Full Disk Access required):
 
-# Get the current page title
-osascript -e 'tell application "Safari" to return name of current tab of front window'
-
-# Execute JavaScript in the current tab
-osascript -e 'tell application "Safari" to do JavaScript "document.body.innerText" in current tab of front window'
-
-# Search browsing history
+```bash
+# Last 10 visited pages (title, url)
 sqlite3 ~/Library/Safari/History.db "SELECT v.title, i.url FROM history_visits v JOIN history_items i ON v.history_item = i.id ORDER BY v.visit_time DESC LIMIT 10;"
 ```
 
-For the full command set and examples, see `SKILL.md`.
+For the full command set and examples, see `SKILL.md` and scripts under `scripts/`.
 
 ## Troubleshooting
 
