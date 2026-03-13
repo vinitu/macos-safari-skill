@@ -10,12 +10,28 @@ This repo stores a skill for automating macOS Safari.
 
 ## Repo Layout
 
-- `SKILL.md` is the main skill workflow.
+- `AGENTS.md`: this file; rules for coding agents.
+- `SKILL.md`: the skill contract and usage instructions for agents.
 - `README.md` is the repo overview for humans.
+- `Makefile`: targets `dictionary-safari`, `check`, `compile`, `test` (test-dictionary + test-smoke).
+- `scripts/tab/list.applescript`, `url.applescript`, `title.applescript`, `source.applescript`, `count.applescript`, `close.applescript`, `email-contents.applescript`.
+- `scripts/window/list.applescript`, `count.applescript`, `close.applescript`.
+- `scripts/url/open.applescript`; `scripts/javascript/run.applescript`; `scripts/reading-list/add.applescript`.
+- `scripts/search-the-web.applescript`; `scripts/bookmarks/show.applescript`.
+- `tests/dictionary_contract.sh`: contract test against Safari scripting dictionary.
+- `tests/smoke_safari.sh`: smoke test for script layer (skips when Safari not available).
+- `.github/workflows/ci-pr.yml`, `ci-main.yml`: CI on PR and push to main.
+
+## Validation
+
+After making changes:
+- run `make check` to ensure Safari is available;
+- run `make test` to run dictionary contract and smoke tests;
+- run `make compile` to compile all AppleScript files (syntax check);
+- update `SKILL.md` when command coverage changes.
 
 ## Editing Rules
 
 - Keep docs in simple English.
-- Update `SKILL.md` when command coverage changes.
 - Do not claim support for a feature unless it is verified with Safari's AppleScript dictionary.
-- Test commands before documenting them.
+- Never open URLs or execute JavaScript without explicit user approval.
