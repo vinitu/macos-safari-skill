@@ -5,7 +5,8 @@ on run argv
 			return ""
 		end if
 		if (count of argv) ≥ 1 then
-			return name of tab (item 1 of argv) as integer of front window
+			set tabIndex to (item 1 of argv) as integer
+			return name of tab tabIndex of front window
 		end if
 		return name of current tab of front window
 	end tell

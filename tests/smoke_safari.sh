@@ -8,12 +8,19 @@ if ! osascript -e 'tell application "Safari" to get name' >/dev/null 2>&1; then
 	exit 0
 fi
 
-tab_out="$(osascript "$ROOT_DIR/scripts/tab/list.applescript" 2>&1)" || { echo "smoke_safari: Safari not running, skipping."; exit 0; }
-printf '%s\n' "$tab_out" >/dev/null || { echo "smoke_safari: tab list failed." >&2; exit 1; }
+if ! command -v jq >/dev/null 2>&1; then
+	echo "smoke_safari: jq not available."
+	exit 0
+fi
 
-tab_url="$(osascript "$ROOT_DIR/scripts/tab/url.applescript" 2>&1)" || true
-tab_count="$(osascript "$ROOT_DIR/scripts/tab/count.applescript" 2>&1)" || true
-win_count="$(osascript "$ROOT_DIR/scripts/window/count.applescript" 2>&1)" || true
-printf '%s\n' "$tab_url" "$tab_count" "$win_count" >/dev/null || true
+tab_list_json="$(bash "$ROOT_DIR/scripts/commands/tab/list.sh" 2>/dev/null)" || { echo "smoke_safari: Safari not running, skipping."; exit 0; }
+tab_url_json="$(bash "$ROOT_DIR/scripts/commands/tab/url.sh" 2>/dev/null)" || true
+tab_count_json="$(bash "$ROOT_DIR/scripts/commands/tab/count.sh" 2>/dev/null)" || true
+win_count_json="$(bash "$ROOT_DIR/scripts/commands/window/count.sh" 2>/dev/null)" || true
+
+printf '%s\n' "$tab_list_json" "$tab_url_json" "$tab_count_json" "$win_count_json" | jq empty >/dev/null || {
+	echo "smoke_safari: command output is not valid JSON." >&2
+	exit 1
+}
 
 echo "smoke_safari: ok"

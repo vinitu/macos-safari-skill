@@ -5,7 +5,8 @@ on run argv
 			return ""
 		end if
 		if (count of argv) ≥ 1 then
-			return URL of tab (item 1 of argv) as integer of front window
+			set tabIndex to (item 1 of argv) as integer
+			return URL of tab tabIndex of front window
 		end if
 		return URL of current tab of front window
 	end tell
