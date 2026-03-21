@@ -4,7 +4,7 @@ on run argv
 		if (count of windows) is 0 then
 			return "No window"
 		end if
-		mail current tab of front window
+		email contents of front document
 	end tell
 	return "opened"
 end run

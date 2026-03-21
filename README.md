@@ -1,6 +1,9 @@
 # macOS Safari Skill
 
-This repo stores a skill for automating Safari on macOS using AppleScript.
+AI agent skill for Safari automation on macOS.
+
+The public interface is `scripts/commands`.
+`scripts/applescripts` stores internal AppleScript backends.
 
 ## Installation
 
@@ -14,50 +17,121 @@ Or with [skills.sh](https://skills.sh):
 skills.sh add vinitu/macos-safari-skill
 ```
 
-## Scope
+The installed global skill directory is usually `~/.agents/skills/macos-safari`.
 
-- Open URLs in new tabs or windows.
-- Read page content, titles, and source HTML.
-- Manage tabs and windows (list, switch, close).
-- Execute JavaScript in the current page.
-- Search browsing history and bookmarks.
+Name mapping:
 
-## Prerequisites
+- Repository: `macos-safari-skill`
+- Package source: `vinitu/macos-safari-skill`
+- Installed directory: `macos-safari`
+
+## Public Interface
+
+Run public commands from the repo root:
+
+- `scripts/commands/tab/list.sh`
+- `scripts/commands/tab/count.sh`
+- `scripts/commands/tab/url.sh`
+- `scripts/commands/tab/title.sh`
+- `scripts/commands/tab/source.sh`
+- `scripts/commands/tab/close.sh`
+- `scripts/commands/tab/email-contents.sh`
+- `scripts/commands/window/list.sh`
+- `scripts/commands/window/count.sh`
+- `scripts/commands/window/close.sh`
+- `scripts/commands/url/open.sh`
+- `scripts/commands/javascript/run.sh`
+- `scripts/commands/reading-list/add.sh`
+- `scripts/commands/bookmarks/show.sh`
+- `scripts/commands/search/web.sh`
+
+All public commands return JSON.
+
+## Dependencies
 
 - macOS with Safari installed
+- `jq`
 - Automation permission granted to your terminal
-- Full Disk Access for reading history and bookmarks databases
-- "Allow JavaScript from Apple Events" enabled in Safari (Develop menu)
+- Full Disk Access for reading Safari history and bookmarks when needed
+- "Allow JavaScript from Apple Events" enabled in Safari for `javascript/run.sh`
 
-## How To Use
+## Repo Layout
 
-From the skill directory (or path where scripts are installed):
-
-```bash
-# Open URL in new tab (or current-tab, new-window)
-osascript scripts/url/open.applescript "https://example.com" new-tab
-# Get URL of current tab
-osascript scripts/tab/url.applescript
-# Get title of current tab
-osascript scripts/tab/title.applescript
-# Run JavaScript in current tab; returns result
-osascript scripts/javascript/run.applescript "document.body.innerText"
+```text
+macos-safari-skill/
+├── AGENTS.md
+├── README.md
+├── SKILL.md
+├── Makefile
+├── .github/workflows/
+│   ├── ci-pr.yml
+│   └── ci-main.yml
+├── scripts/
+│   ├── commands/
+│   │   ├── bookmarks/show.sh
+│   │   ├── javascript/run.sh
+│   │   ├── reading-list/add.sh
+│   │   ├── search/web.sh
+│   │   ├── tab/*.sh
+│   │   ├── url/open.sh
+│   │   └── window/*.sh
+│   └── applescripts/
+│       ├── bookmarks/show.applescript
+│       ├── javascript/run.applescript
+│       ├── reading-list/add.applescript
+│       ├── search/web.applescript
+│       ├── tab/*.applescript
+│       ├── url/open.applescript
+│       └── window/*.applescript
+└── tests/
+    ├── dictionary_contract.sh
+    └── smoke_safari.sh
 ```
 
-Browsing history is read via SQLite (Full Disk Access required):
+## Examples
 
 ```bash
-# Last 10 visited pages (title, url)
-sqlite3 ~/Library/Safari/History.db "SELECT v.title, i.url FROM history_visits v JOIN history_items i ON v.history_item = i.id ORDER BY v.visit_time DESC LIMIT 10;"
+scripts/commands/tab/list.sh
+scripts/commands/tab/count.sh
+scripts/commands/tab/url.sh
+scripts/commands/tab/title.sh 2
+scripts/commands/window/list.sh
+scripts/commands/javascript/run.sh 'document.title'
+scripts/commands/url/open.sh 'https://example.com' new-tab
+scripts/commands/reading-list/add.sh 'https://example.com'
 ```
 
-For the full command set and examples, see `SKILL.md` and scripts under `scripts/`.
+## Output Contract
 
-## Troubleshooting
+- `tab/list.sh` returns `{"success":true,"data":{"tabs":[{"index":1,"title":"...","url":"..."}]}}`
+- `window/list.sh` returns `{"success":true,"data":{"windows":[{"index":1,"name":"..."}]}}`
+- `tab/count.sh` and `window/count.sh` return a `count` integer.
+- `tab/url.sh`, `tab/title.sh`, and `tab/source.sh` return one field object.
+- Write actions return explicit confirmation objects such as `{"opened":true}` or `{"closed":true}` inside `data`.
+- Failures return `{"success":false,"error":"..."}` with a non-zero exit status.
 
-| Issue | Solution |
-|-------|----------|
-| "not authorized" error | Grant Automation permission to terminal in System Settings |
-| JavaScript returns empty | Page may not be fully loaded; add `delay` before reading |
-| Can't read History.db | Grant Full Disk Access to terminal in System Settings |
-| Safari not responding | Ensure Safari is running; try `tell application "Safari" to activate` first |
+## Validation and Tests
+
+```bash
+make check
+make compile
+make test
+```
+
+CI workflows:
+
+- `.github/workflows/ci-pr.yml` validates PRs, auto-merges approved branch flows, and prepares releases.
+- `.github/workflows/ci-main.yml` validates `main`, creates a patch tag, and publishes a release.
+
+## Known Limits
+
+- The public interface is the shell wrapper layer, not direct AppleScript files.
+- `javascript/run.sh` requires Safari's Apple Events JavaScript setting.
+- Commands that open URLs, close tabs, close windows, or write to Reading List are explicit write actions.
+- Browsing history and bookmarks access may need Full Disk Access.
+
+## Unsupported Behaviour
+
+- Direct use of `scripts/applescripts/**` as public API.
+- Plain-text or custom output formats from public commands.
+- Running write actions without explicit user approval.
