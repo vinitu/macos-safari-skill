@@ -1,12 +1,15 @@
 .PHONY: dictionary-safari compile check test test-dictionary test-smoke
 
 dictionary-safari:
-	@sdef /System/Applications/Safari.app 2>/dev/null || true
+	@sdef /Applications/Safari.app 2>/dev/null || true
 
 compile:
 	@set -euo pipefail; \
 	find scripts -name '*.applescript' -print | while IFS= read -r file; do \
-		osacompile -o /tmp/$$(echo "$$file" | tr '/' '_' | sed 's/\.applescript$$/.scpt/') "$$file"; \
+		osacompile -o /tmp/$$(echo "$$file" | tr '/' '_' | sed 's/\.applescript$$/.scpt/') "$$file" || exit 1; \
+	done; \
+	find scripts -name '*.sh' -print | while IFS= read -r file; do \
+		bash -n "$$file" || exit 1; \
 	done
 
 check:

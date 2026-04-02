@@ -1,38 +1,43 @@
-# Repo Guide
+# macOS Safari Skill Agents Guide
 
-This repo stores a skill for automating macOS Safari.
+Use this skill when the task is about Safari on macOS.
+This repository provides a skill for automating macOS Safari via AppleScript.
+It exposes a stable public interface via shell scripts that return JSON or plain text.
 
-## Goal
+## Source of Truth
+- `SKILL.md` is the primary contract for agent interactions.
+- `scripts/commands/` is the only public command surface.
+- `scripts/applescripts/` is the internal implementation.
 
-- Document AppleScript commands for Safari automation accurately.
-- Prefer runnable examples over long prose.
-- Never open URLs or execute JavaScript without explicit user approval.
+## Repository Layout
+- `AGENTS.md`: This guide for AI agents.
+- `README.md`: Human-facing overview and installation.
+- `SKILL.md`: Detailed command contract and examples.
+- `Makefile`: Entrypoints for validation (`compile`, `test`, `check`).
+- `scripts/commands/`: Public shell wrappers (JSON/text output).
+- `scripts/applescripts/`: Internal AppleScript backends.
+- `tests/`: Automated validation and contract checks.
+- `.github/workflows/`: CI pipelines for PRs and main branch.
 
-## Repo Layout
-
-- `AGENTS.md`: this file; rules for coding agents.
-- `SKILL.md`: the skill contract and usage instructions for agents.
-- `README.md` is the repo overview for humans.
-- `Makefile`: targets `dictionary-safari`, `check`, `compile`, `test` (test-dictionary + test-smoke).
-- `scripts/tab/list.applescript`, `url.applescript`, `title.applescript`, `source.applescript`, `count.applescript`, `close.applescript`, `email-contents.applescript`.
-- `scripts/window/list.applescript`, `count.applescript`, `close.applescript`.
-- `scripts/url/open.applescript`; `scripts/javascript/run.applescript`; `scripts/reading-list/add.applescript`.
-- `scripts/search-the-web.applescript`; `scripts/bookmarks/show.applescript`.
-- `tests/dictionary_contract.sh`: contract test against Safari scripting dictionary.
-- `tests/smoke_safari.sh`: smoke test for script layer (skips when Safari not available).
-- `.github/workflows/ci-pr.yml`: PR validation, auto-merge, version bump, tag, and release flow.
-- `.github/workflows/ci-main.yml`: main-branch validation, patch tag, and release flow.
+## Working Rules
+- Always use `scripts/commands/` to interact with Safari.
+- Never call `scripts/applescripts/` directly.
+- Read operations are safe; write operations (close, open, run JS) must be explicit.
+- Follow the existing naming pattern when adding new commands.
+- Ensure all public commands are documented in `SKILL.md`.
 
 ## Validation
+- `make check`: Verify Safari is available and responding.
+- `make compile`: Syntax check for all AppleScript and shell scripts.
+- `make test`: Run all automated tests (smoke tests and dictionary contract).
 
-After making changes:
-- run `make check` to ensure Safari is available;
-- run `make test` to run dictionary contract and smoke tests;
-- run `make compile` to compile all AppleScript files (syntax check);
-- update `SKILL.md` when command coverage changes.
+## Common Pitfalls
+- Safari must be running for most commands to work.
+- TCC permissions (Automation) must be granted to the terminal or parent process.
+- Private windows may have different behavior or restricted access.
 
-## Editing Rules
-
-- Keep docs in simple English.
-- Do not claim support for a feature unless it is verified with Safari's AppleScript dictionary.
+## Safety Rules
 - Never open URLs or execute JavaScript without explicit user approval.
+- Protect user privacy: do not log or store browsing history or session data.
+- Write actions (close, open, run JS) must be explicit.
+- Internal AppleScript files are not public API.
