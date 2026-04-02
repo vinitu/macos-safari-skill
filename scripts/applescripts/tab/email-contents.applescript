@@ -4,7 +4,8 @@ on run argv
 		if (count of windows) is 0 then
 			return "No window"
 		end if
-		mail current tab of front window
+		tell current tab of front window
+			get email contents
+		end tell
 	end tell
-	return "opened"
 end run

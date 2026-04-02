@@ -20,12 +20,32 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          for path in AGENTS.md LICENSE README.md SKILL.md Makefile scripts/tab/list.applescript tests/dictionary_contract.sh tests/smoke_safari.sh; do
+      - name: Validate file structure
+        run: |
+          for path in AGENTS.md LICENSE README.md SKILL.md Makefile scripts/commands/tab/list.sh scripts/commands/_lib/common.sh tests/dictionary_contract.sh tests/smoke_safari.sh; do
             [ -f "$path" ] || { echo "::error::Missing $path"; exit 1; }
           done
-      - run: make compile
-      - run: make test
+      - name: Validate SKILL.md front matter
+        run: |
+          head -n 1 SKILL.md | grep -q "^---$" || { echo "::error::SKILL.md must start with ---"; exit 1; }
+          grep -q "^name: " SKILL.md || { echo "::error::SKILL.md must have name in front matter"; exit 1; }
+          grep -q "^description: " SKILL.md || { echo "::error::SKILL.md must have description in front matter"; exit 1; }
+      - name: Check for secrets
+        run: |
+          if [ -f .env ]; then
+            echo "::error::.env file should not be committed"; exit 1
+          fi
+      - name: Shellcheck
+        run: |
+          if command -v shellcheck >/dev/null 2>&1; then
+            find scripts/commands -name "*.sh" | xargs shellcheck
+          else
+            echo "shellcheck not found, skipping"
+          fi
+      - name: Compile validation
+        run: make compile
+      - name: Contract checks
+        run: make test
 
   determine_version:
     name: Detect version bump
