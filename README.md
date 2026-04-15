@@ -38,7 +38,22 @@ The public interface is located in `scripts/commands/`. All commands should be r
 # Open URL in new tab
 scripts/commands/url/open.sh "https://example.com" new-tab
 
-# List all open tabs (JSON)
+# Find a tab by URL or title pattern across all windows
+scripts/commands/tab/find.sh "github.com"
+
+# Find and immediately switch to it
+scripts/commands/tab/find.sh "github.com" --focus
+
+# Switch to window 2, tab 3
+scripts/commands/tab/focus.sh 2 3
+
+# List all tabs in all windows (JSON)
+scripts/commands/window/tabs.sh
+
+# List tabs in window 1 only
+scripts/commands/window/tabs.sh 1
+
+# List all open tabs in front window
 scripts/commands/tab/list.sh
 
 # Get URL of current tab

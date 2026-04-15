@@ -7,7 +7,9 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/_lib/common.sh"
 BACKEND_SCRIPT="$(backend_script "javascript" "run")"
 
 usage() {
-  echo "Usage: scripts/commands/javascript/run.sh <script> [tab-index]" >&2
+  echo "Usage: scripts/commands/javascript/run.sh <script> [--window N] [--tab N]" >&2
+  echo "  --window N  target window index (default: front window)" >&2
+  echo "  --tab N     target tab index (default: current tab)" >&2
 }
 
 main() {
