@@ -24,25 +24,51 @@ on run argv
 	end repeat
 
 	tell application "Safari"
-		if (count of windows) is 0 then
+		set windowCount to count of windows
+		if windowCount is 0 then
 			return "{\"success\":false,\"error\":\"no windows open\"}"
 		end if
 
 		if targetWindow > 0 then
+			if targetWindow > windowCount then
+				return "{\"success\":false,\"error\":\"window " & targetWindow & " not found\"}"
+			end if
 			set w to window targetWindow
 		else
 			set w to front window
 		end if
 
 		if targetTab > 0 then
+			if targetTab > (count of tabs of w) then
+				return "{\"success\":false,\"error\":\"tab " & targetTab & " not found\"}"
+			end if
 			set current tab of w to tab targetTab of w
 		end if
 
+		set index of w to 1
 		activate
 		delay 0.3
 	end tell
 
 	do shell script "screencapture -l $(osascript -e 'tell application \"Safari\" to id of front window') " & quoted form of outputPath
-	set safePath to do shell script "echo " & quoted form of outputPath & " | sed 's/\"/\\\\\"/g'"
+	set safePath to my jsonEscape(outputPath)
 	return "{\"success\":true,\"path\":\"" & safePath & "\"}"
 end run
+
+on jsonEscape(valueText)
+	set escapedText to valueText as text
+	set escapedText to my replaceText("\\", "\\\\", escapedText)
+	set escapedText to my replaceText("\"", "\\\"", escapedText)
+	set escapedText to my replaceText(return, "\\r", escapedText)
+	set escapedText to my replaceText(linefeed, "\\n", escapedText)
+	return escapedText
+end jsonEscape
+
+on replaceText(findText, replaceWith, sourceText)
+	set AppleScript's text item delimiters to findText
+	set textItems to every text item of sourceText
+	set AppleScript's text item delimiters to replaceWith
+	set replacedText to textItems as text
+	set AppleScript's text item delimiters to ""
+	return replacedText
+end replaceText

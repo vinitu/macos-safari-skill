@@ -33,20 +33,32 @@ on run argv
 	end if
 
 	tell application "Safari"
-		if (count of windows) is 0 then
+		set windowCount to count of windows
+		if windowCount is 0 then
 			return "{\"success\":false,\"error\":\"no windows open\"}"
 		end if
-		if targetWin > (count of windows) then
+		if targetWin > windowCount then
 			return "{\"success\":false,\"error\":\"target window " & targetWin & " not found\"}"
 		end if
 
 		if sourceWin > 0 then
+			if sourceWin > windowCount then
+				return "{\"success\":false,\"error\":\"source window " & sourceWin & " not found\"}"
+			end if
 			set w to window sourceWin
 		else
 			set w to front window
+			set sourceWin to index of w
+		end if
+
+		if sourceWin is targetWin then
+			return "{\"success\":false,\"error\":\"source and target windows must be different\"}"
 		end if
 
 		if sourceTab > 0 then
+			if sourceTab > (count of tabs of w) then
+				return "{\"success\":false,\"error\":\"tab " & sourceTab & " not found in window " & sourceWin & "\"}"
+			end if
 			set tabURL to URL of tab sourceTab of w
 			close tab sourceTab of w
 		else
@@ -56,7 +68,9 @@ on run argv
 
 		tell window targetWin to make new tab with properties {URL:tabURL}
 		set newTabIdx to count of tabs of window targetWin
+		set index of window targetWin to 1
 		set current tab of window targetWin to tab newTabIdx of window targetWin
+		activate
 	end tell
 
 	return "{\"success\":true,\"window\":" & targetWin & ",\"tab\":" & newTabIdx & "}"
