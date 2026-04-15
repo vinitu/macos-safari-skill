@@ -12,11 +12,29 @@ on run argv
 			set t to item ti of tabList
 			set tabURL to URL of t
 			set tabName to name of t
-			set safeName to do shell script "echo " & quoted form of tabName & " | sed 's/\"/\\\\\"/g'"
-			set safeURL to do shell script "echo " & quoted form of tabURL & " | sed 's/\"/\\\\\"/g'"
+			set safeName to my jsonEscape(tabName)
+			set safeURL to my jsonEscape(tabURL)
 			if ti > 1 then set output to output & ","
 			set output to output & "{\"index\":" & ti & ",\"name\":\"" & safeName & "\",\"url\":\"" & safeURL & "\"}"
 		end repeat
 		return output & "]"
 	end tell
 end run
+
+on jsonEscape(valueText)
+	set escapedText to valueText as text
+	set escapedText to my replaceText("\\", "\\\\", escapedText)
+	set escapedText to my replaceText("\"", "\\\"", escapedText)
+	set escapedText to my replaceText(return, "\\r", escapedText)
+	set escapedText to my replaceText(linefeed, "\\n", escapedText)
+	return escapedText
+end jsonEscape
+
+on replaceText(findText, replaceWith, sourceText)
+	set AppleScript's text item delimiters to findText
+	set textItems to every text item of sourceText
+	set AppleScript's text item delimiters to replaceWith
+	set replacedText to textItems as text
+	set AppleScript's text item delimiters to ""
+	return replacedText
+end replaceText

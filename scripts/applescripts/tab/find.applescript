@@ -36,8 +36,8 @@ on run argv
 				set tabURL to URL of t
 				set tabName to name of t
 				if tabURL contains pattern or tabName contains pattern then
-					set safeName to do shell script "echo " & quoted form of tabName & " | sed 's/\"/\\\\\"/g'"
-					set safeURL to do shell script "echo " & quoted form of tabURL & " | sed 's/\"/\\\\\"/g'"
+					set safeName to my jsonEscape(tabName)
+					set safeURL to my jsonEscape(tabURL)
 					set entry to "{\"window\":" & wi & ",\"tab\":" & ti & ",\"name\":\"" & safeName & "\",\"url\":\"" & safeURL & "\"}"
 					set end of matches to entry
 					if firstWin is 0 then
@@ -55,7 +55,7 @@ on run argv
 	end tell
 
 	if (count of matches) is 0 then
-		return "{\"success\":false,\"error\":\"no tab found matching: " & pattern & "\"}"
+		return "{\"success\":false,\"error\":\"no tab found matching: " & my jsonEscape(pattern) & "\"}"
 	end if
 
 	if returnAll then
@@ -69,3 +69,21 @@ on run argv
 
 	return item 1 of matches
 end run
+
+on jsonEscape(valueText)
+	set escapedText to valueText as text
+	set escapedText to my replaceText("\\", "\\\\", escapedText)
+	set escapedText to my replaceText("\"", "\\\"", escapedText)
+	set escapedText to my replaceText(return, "\\r", escapedText)
+	set escapedText to my replaceText(linefeed, "\\n", escapedText)
+	return escapedText
+end jsonEscape
+
+on replaceText(findText, replaceWith, sourceText)
+	set AppleScript's text item delimiters to findText
+	set textItems to every text item of sourceText
+	set AppleScript's text item delimiters to replaceWith
+	set replacedText to textItems as text
+	set AppleScript's text item delimiters to ""
+	return replacedText
+end replaceText
