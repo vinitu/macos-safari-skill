@@ -1,7 +1,8 @@
 -- Open URL. argv: url [current-tab|new-tab|new-window]
+-- Returns JSON: {"success":true,"url":"...","target":"..."}
 on run argv
 	if (count of argv) < 1 then
-		return "Usage: open.applescript <url> [current-tab|new-tab|new-window]"
+		return "{\"success\":false,\"error\":\"missing url\"}"
 	end if
 	set urlStr to item 1 of argv
 	set whereTo to "new-tab"
@@ -16,5 +17,7 @@ on run argv
 			tell front window to make new tab with properties {URL:urlStr}
 		end if
 	end tell
-	return "opened"
+
+	set safeURL to do shell script "echo " & quoted form of urlStr & " | sed 's/\"/\\\\\"/g'"
+	return "{\"success\":true,\"url\":\"" & safeURL & "\",\"target\":\"" & whereTo & "\"}"
 end run

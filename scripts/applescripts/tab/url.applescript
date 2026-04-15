@@ -1,12 +1,41 @@
--- Get URL of current tab (front window). argv: [tabIndex] default: current
+-- Get URL of a tab. argv: [--window N] [--tab N]
+-- Legacy positional: single integer = tab index in front window
+-- Default: current tab of front window
 on run argv
 	tell application "Safari"
 		if (count of windows) is 0 then
 			return ""
 		end if
-		if (count of argv) ≥ 1 then
-			return URL of tab ((item 1 of argv) as integer) of front window
+
+		set targetWindow to 0
+		set targetTab to 0
+
+		set i to 1
+		repeat while i ≤ (count of argv)
+			set arg to item i of argv
+			if arg is "--window" and i < (count of argv) then
+				set targetWindow to (item (i + 1) of argv) as integer
+				set i to i + 2
+			else if arg is "--tab" and i < (count of argv) then
+				set targetTab to (item (i + 1) of argv) as integer
+				set i to i + 2
+			else
+				try
+					set targetTab to (arg as integer)
+				end try
+				set i to i + 1
+			end if
+		end repeat
+
+		if targetWindow > 0 then
+			set w to window targetWindow
+		else
+			set w to front window
 		end if
-		return URL of current tab of front window
+
+		if targetTab > 0 then
+			return URL of tab targetTab of w
+		end if
+		return URL of current tab of w
 	end tell
 end run

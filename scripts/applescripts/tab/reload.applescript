@@ -1,7 +1,5 @@
--- Close a tab. argv: [--window N] [--tab N]
--- Legacy positional: single integer = tab index in front window
+-- Reload a tab. argv: [--window N] [--tab N]
 -- Default: current tab of front window
--- Returns JSON: {"success":true}
 on run argv
 	tell application "Safari"
 		if (count of windows) is 0 then
@@ -10,7 +8,6 @@ on run argv
 
 		set targetWindow to 0
 		set targetTab to 0
-		set legacyMode to false
 
 		set i to 1
 		repeat while i ≤ (count of argv)
@@ -21,11 +18,6 @@ on run argv
 			else if arg is "--tab" and i < (count of argv) then
 				set targetTab to (item (i + 1) of argv) as integer
 				set i to i + 2
-			else if arg is not "current" then
-				try
-					set targetTab to (arg as integer)
-				end try
-				set i to i + 1
 			else
 				set i to i + 1
 			end if
@@ -38,10 +30,12 @@ on run argv
 		end if
 
 		if targetTab > 0 then
-			close tab targetTab of w
+			set t to tab targetTab of w
 		else
-			close current tab of w
+			set t to current tab of w
 		end if
+
+		do JavaScript "location.reload()" in t
 	end tell
 
 	return "{\"success\":true}"

@@ -7,7 +7,8 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/_lib/common.sh"
 BACKEND_SCRIPT="$(backend_script "tab" "count")"
 
 usage() {
-  echo "Usage: scripts/commands/tab/count.sh" >&2
+  echo "Usage: scripts/commands/tab/count.sh [window-index]" >&2
+  echo "  window-index  window to count tabs in (default: front window)" >&2
 }
 
 main() {
