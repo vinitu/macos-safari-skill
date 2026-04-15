@@ -1,7 +1,5 @@
--- Close a tab. argv: [--window N] [--tab N]
--- Legacy positional: single integer = tab index in front window
+-- Duplicate a tab (open its URL in a new tab). argv: [--window N] [--tab N]
 -- Default: current tab of front window
--- Returns JSON: {"success":true}
 on run argv
 	tell application "Safari"
 		if (count of windows) is 0 then
@@ -10,7 +8,6 @@ on run argv
 
 		set targetWindow to 0
 		set targetTab to 0
-		set legacyMode to false
 
 		set i to 1
 		repeat while i ≤ (count of argv)
@@ -21,11 +18,6 @@ on run argv
 			else if arg is "--tab" and i < (count of argv) then
 				set targetTab to (item (i + 1) of argv) as integer
 				set i to i + 2
-			else if arg is not "current" then
-				try
-					set targetTab to (arg as integer)
-				end try
-				set i to i + 1
 			else
 				set i to i + 1
 			end if
@@ -38,11 +30,13 @@ on run argv
 		end if
 
 		if targetTab > 0 then
-			close tab targetTab of w
+			set tabURL to URL of tab targetTab of w
 		else
-			close current tab of w
+			set tabURL to URL of current tab of w
 		end if
-	end tell
 
-	return "{\"success\":true}"
+		tell w to make new tab with properties {URL:tabURL}
+		set safeURL to do shell script "echo " & quoted form of tabURL & " | sed 's/\"/\\\\\"/g'"
+		return "{\"success\":true,\"url\":\"" & safeURL & "\"}"
+	end tell
 end run

@@ -1,9 +1,7 @@
 # macOS Safari Skill
 
-AI agent skill for Safari automation on macOS.
-
-The public interface is `scripts/commands`.
-`scripts/applescripts` stores internal AppleScript backends.
+This repository provides a skill for automating macOS Safari via AppleScript.
+It exposes a stable public interface via shell scripts that return JSON or plain text.
 
 ## Installation
 
@@ -17,121 +15,71 @@ Or with [skills.sh](https://skills.sh):
 skills.sh add vinitu/macos-safari-skill
 ```
 
-The installed global skill directory is usually `~/.agents/skills/macos-safari`.
+The package name is `vinitu/macos-safari-skill`. The skill is installed into the `macos-safari-skill` directory in your global skills folder.
 
-Name mapping:
-
-- Repository: `macos-safari-skill`
-- Package source: `vinitu/macos-safari-skill`
-- Installed directory: `macos-safari`
-
-## Public Interface
-
-Run public commands from the repo root:
-
-- `scripts/commands/tab/list.sh`
-- `scripts/commands/tab/count.sh`
-- `scripts/commands/tab/url.sh`
-- `scripts/commands/tab/title.sh`
-- `scripts/commands/tab/source.sh`
-- `scripts/commands/tab/close.sh`
-- `scripts/commands/tab/email-contents.sh`
-- `scripts/commands/window/list.sh`
-- `scripts/commands/window/count.sh`
-- `scripts/commands/window/close.sh`
-- `scripts/commands/url/open.sh`
-- `scripts/commands/javascript/run.sh`
-- `scripts/commands/reading-list/add.sh`
-- `scripts/commands/bookmarks/show.sh`
-- `scripts/commands/search/web.sh`
-
-All public commands return JSON.
-
-## Dependencies
+## Prerequisites
 
 - macOS with Safari installed
-- `jq`
 - Automation permission granted to your terminal
-- Full Disk Access for reading Safari history and bookmarks when needed
-- "Allow JavaScript from Apple Events" enabled in Safari for `javascript/run.sh`
+- "Allow JavaScript from Apple Events" enabled in Safari (Develop menu)
 
-## Repo Layout
+## Repository Layout
+- `scripts/commands/`: Public shell wrappers (JSON/text output).
+- `scripts/applescripts/`: Internal AppleScript backends (not for direct use).
+- `tests/`: Automated validation and contract checks.
+- `AGENTS.md`: Detailed guide for AI agents.
+- `SKILL.md`: Detailed command contract and examples.
 
-```text
-macos-safari-skill/
-├── AGENTS.md
-├── README.md
-├── SKILL.md
-├── Makefile
-├── .github/workflows/
-│   ├── ci-pr.yml
-│   └── ci-main.yml
-├── scripts/
-│   ├── commands/
-│   │   ├── bookmarks/show.sh
-│   │   ├── javascript/run.sh
-│   │   ├── reading-list/add.sh
-│   │   ├── search/web.sh
-│   │   ├── tab/*.sh
-│   │   ├── url/open.sh
-│   │   └── window/*.sh
-│   └── applescripts/
-│       ├── bookmarks/show.applescript
-│       ├── javascript/run.applescript
-│       ├── reading-list/add.applescript
-│       ├── search/web.applescript
-│       ├── tab/*.applescript
-│       ├── url/open.applescript
-│       └── window/*.applescript
-└── tests/
-    ├── dictionary_contract.sh
-    └── smoke_safari.sh
-```
+## How To Use
 
-## Examples
+The public interface is located in `scripts/commands/`. All commands should be run from the repository root.
 
 ```bash
+# Open URL in new tab
+scripts/commands/url/open.sh "https://example.com" new-tab
+
+# Find a tab by URL or title pattern across all windows
+scripts/commands/tab/find.sh "github.com"
+
+# Find and immediately switch to it
+scripts/commands/tab/find.sh "github.com" --focus
+
+# Switch to window 2, tab 3
+scripts/commands/tab/focus.sh 2 3
+
+# List all tabs in all windows (JSON)
+scripts/commands/window/tabs.sh
+
+# List tabs in window 1 only
+scripts/commands/window/tabs.sh 1
+
+# List all open tabs in front window
 scripts/commands/tab/list.sh
-scripts/commands/tab/count.sh
+
+# Get URL of current tab
 scripts/commands/tab/url.sh
-scripts/commands/tab/title.sh 2
-scripts/commands/window/list.sh
-scripts/commands/javascript/run.sh 'document.title'
-scripts/commands/url/open.sh 'https://example.com' new-tab
-scripts/commands/reading-list/add.sh 'https://example.com'
+
+# Get title of current tab
+scripts/commands/tab/title.sh
+
+# Run JavaScript in current tab
+scripts/commands/javascript/run.sh "document.body.innerText"
 ```
 
-## Output Contract
+For the full command set and examples, see `SKILL.md`.
 
-- `tab/list.sh` returns `{"success":true,"data":{"tabs":[{"index":1,"title":"...","url":"..."}]}}`
-- `window/list.sh` returns `{"success":true,"data":{"windows":[{"index":1,"name":"..."}]}}`
-- `tab/count.sh` and `window/count.sh` return a `count` integer.
-- `tab/url.sh`, `tab/title.sh`, and `tab/source.sh` return one field object.
-- Write actions return explicit confirmation objects such as `{"opened":true}` or `{"closed":true}` inside `data`.
-- Failures return `{"success":false,"error":"..."}` with a non-zero exit status.
+## Validation
 
-## Validation and Tests
+After making changes, run the validation suite from the repo root:
 
 ```bash
-make check
-make compile
-make test
+make check    # Verify Safari is available and responding
+make compile  # Syntax check all shell and AppleScript files
+make test     # Run all automated tests (smoke tests and contract checks)
 ```
-
-CI workflows:
-
-- `.github/workflows/ci-pr.yml` validates PRs, auto-merges approved branch flows, and prepares releases.
-- `.github/workflows/ci-main.yml` validates `main`, creates a patch tag, and publishes a release.
 
 ## Known Limits
-
-- The public interface is the shell wrapper layer, not direct AppleScript files.
-- `javascript/run.sh` requires Safari's Apple Events JavaScript setting.
-- Commands that open URLs, close tabs, close windows, or write to Reading List are explicit write actions.
-- Browsing history and bookmarks access may need Full Disk Access.
-
-## Unsupported Behaviour
-
-- Direct use of `scripts/applescripts/**` as public API.
-- Plain-text or custom output formats from public commands.
-- Running write actions without explicit user approval.
+- Safari must be running for most commands to work.
+- TCC permissions (Automation) must be granted to the terminal or parent process.
+- Private windows may have different behavior or restricted access.
+- Reading Safari's History.db requires Full Disk Access (not currently implemented).

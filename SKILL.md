@@ -1,6 +1,6 @@
 ---
-name: macos-safari
-description: Use this skill when you need to automate Safari on macOS through scripts/commands. Supports tab and window inspection, URL opening, JavaScript execution, bookmarks display, Reading List updates, and web search.
+name: macos-safari-skill
+description: Use this skill when you need to work with Safari on macOS through scripts/commands.
 ---
 
 # macOS Safari
@@ -8,80 +8,139 @@ description: Use this skill when you need to automate Safari on macOS through sc
 Use this skill when the task is about Safari on macOS.
 
 ## Overview
-
 - Public interface: `scripts/commands`
 - Internal backend: `scripts/applescripts`
 - Output: JSON by default
 
 ## Main Rule
-
 Use only `scripts/commands`.
 Do not call `scripts/applescripts` directly.
 
 ## Requirements
-
-- macOS with Safari installed
-- `jq`
-- Automation permission for your terminal
-- "Allow JavaScript from Apple Events" enabled for `javascript/run.sh`
+- macOS with Safari.app
+- Automation permissions for the terminal.
+- "Allow JavaScript from Apple Events" enabled in Safari (Develop menu).
 
 ## Public Interface
-
 - `scripts/commands/tab/*`
 - `scripts/commands/window/*`
-- `scripts/commands/url/open.sh`
-- `scripts/commands/javascript/run.sh`
-- `scripts/commands/reading-list/add.sh`
-- `scripts/commands/bookmarks/show.sh`
-- `scripts/commands/search/web.sh`
+- `scripts/commands/url/*`
+- `scripts/commands/javascript/*`
+- `scripts/commands/reading-list/*`
+- `scripts/commands/bookmarks/*`
+- `scripts/commands/search/*`
 
 ## Output Rules
-
-- Commands return JSON by default.
-- Failures return `{"success":false,"error":"..."}`.
-- Write actions return explicit confirmation objects inside `data`.
+- All commands return JSON.
+- Error responses: `{"success":false,"error":"..."}` via `common.sh` helpers.
 
 ## Commands
 
-### Tab
-
+### Tabs
 ```bash
+# List all tabs in front window as JSON array
 scripts/commands/tab/list.sh
-scripts/commands/tab/count.sh
-scripts/commands/tab/url.sh
-scripts/commands/tab/title.sh 2
-scripts/commands/tab/source.sh
-scripts/commands/tab/close.sh current
-scripts/commands/tab/email-contents.sh
+
+# Find a tab by URL or title pattern across all windows
+# Returns: {"window":N,"tab":N,"name":"...","url":"..."}
+scripts/commands/tab/find.sh <pattern> [--focus] [--all]
+
+# Switch to a specific tab (brings Safari to front)
+scripts/commands/tab/focus.sh <window> <tab>
+
+# Move current tab to another window
+scripts/commands/tab/move.sh --to <window> [--window N] [--tab N]
+
+# Reload a tab
+scripts/commands/tab/reload.sh [--window N] [--tab N]
+
+# Duplicate a tab (opens its URL in a new tab)
+scripts/commands/tab/duplicate.sh [--window N] [--tab N]
+
+# Take a screenshot of a tab; saves to /tmp/safari-screenshot.png by default
+scripts/commands/tab/screenshot.sh [--output path] [--window N] [--tab N]
+
+# Get URL of a tab
+scripts/commands/tab/url.sh [--window N] [--tab N]
+
+# Get title of a tab
+scripts/commands/tab/title.sh [--window N] [--tab N]
+
+# Get page source of a tab
+scripts/commands/tab/source.sh [--window N] [--tab N]
+
+# Get email-friendly contents of a tab
+scripts/commands/tab/email-contents.sh [--window N] [--tab N]
+
+# Count tabs in a window — returns {"count":N}
+scripts/commands/tab/count.sh [window-index]
+
+# Close a tab
+scripts/commands/tab/close.sh [--window N] [--tab N]
 ```
 
-### Window
-
+### Windows
 ```bash
+# List all windows as JSON array (includes tabs_count per window)
 scripts/commands/window/list.sh
+
+# Open a new empty window
+scripts/commands/window/new.sh
+
+# Bring a window to front
+scripts/commands/window/focus.sh <window>
+
+# List all tabs for a specific window (or all windows if omitted)
+scripts/commands/window/tabs.sh [window]
+
+# Count open windows — returns {"count":N}
 scripts/commands/window/count.sh
-scripts/commands/window/close.sh
+
+# Close a window
+scripts/commands/window/close.sh [window-index]
 ```
 
-### URL, JavaScript, and Safari actions
-
+### URLs and Navigation
 ```bash
-scripts/commands/url/open.sh "https://example.com" new-tab
-scripts/commands/javascript/run.sh 'document.title'
-scripts/commands/reading-list/add.sh "https://example.com"
+# Open URL (target: current-tab, new-tab, new-window)
+# Returns: {"success":true,"url":"...","target":"..."}
+scripts/commands/url/open.sh "https://example.com" [target]
+```
+
+### JavaScript
+```bash
+# Run JavaScript in current tab
+scripts/commands/javascript/run.sh "document.body.innerText"
+
+# Run JavaScript in a specific window/tab
+scripts/commands/javascript/run.sh "document.title" --window 2 --tab 3
+```
+
+### Bookmarks and Reading List
+```bash
+# Open Safari's Bookmarks view — returns {"success":true}
 scripts/commands/bookmarks/show.sh
-scripts/commands/search/web.sh "OpenAI docs"
+
+# Add a URL to Reading List — returns {"success":true,"url":"..."}
+scripts/commands/reading-list/add.sh <url>
+```
+
+### Search
+```bash
+# Search the web using Safari's default engine — returns {"success":true,"query":"..."}
+scripts/commands/search/the-web.sh "query"
 ```
 
 ## JSON Contract
-
-- tab list: `{"success":true,"data":{"tabs":[{"index":1,"title":"...","url":"..."}]}}`
-- window list: `{"success":true,"data":{"windows":[{"index":1,"name":"..."}]}}`
-- count: `{"success":true,"data":{"count":2}}`
-- value: `{"success":true,"data":{"url":"..."}}`, `{"title":"..."}`, `{"source":"..."}`
-- action: `{"success":true,"data":{"opened":true}}`, `{"closed":true}`, `{"searched":true}`
+- Tab object: `{"index":N,"name":"...","url":"..."}`
+- Window object: `{"index":N,"name":"...","tabs_count":N}`
+- Find result: `{"window":N,"tab":N,"name":"...","url":"..."}`
+- Window tabs: `{"window":N,"tabs":[{"index":N,"name":"...","url":"..."}]}`
+- Count: `{"count":N}`
+- Success/Failure: `{"success":true/false,"error":"..."}`
 
 ## Safety Boundaries
-
-- Write actions must be explicit and require user approval: `url/open.sh`, `javascript/run.sh`, `reading-list/add.sh`, `tab/close.sh`, `window/close.sh`, `tab/email-contents.sh`, `bookmarks/show.sh`, `search/web.sh`.
+- Write actions (close, open, run JS) must be explicit.
 - Internal AppleScript files are not public API.
+- Never execute JavaScript from untrusted sources.
+- Protect user privacy: do not log or store browsing history or session data.

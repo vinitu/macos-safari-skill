@@ -1,6 +1,7 @@
--- Count Safari windows.
+-- Count open Safari windows.
+-- Returns JSON: {"count":N}
 on run argv
 	tell application "Safari"
-		return (count of windows) as text
+		return "{\"count\":" & (count of windows) & "}"
 	end tell
 end run

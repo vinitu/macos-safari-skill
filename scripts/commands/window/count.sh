@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMON_SH="$SCRIPT_DIR/../common.sh"
-# shellcheck source=../common.sh
-source "$COMMON_SH"
+# shellcheck source=scripts/commands/_lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/_lib/common.sh"
+
+BACKEND_SCRIPT="$(backend_script "window" "count")"
+
+usage() {
+  echo "Usage: scripts/commands/window/count.sh" >&2
+}
 
 main() {
-  local backend
-  local result
+  if [[ ! -f "$BACKEND_SCRIPT" ]]; then
+    json_fail "backend script not found: $BACKEND_SCRIPT"
+  fi
 
-  require_jq || return 1
-  backend="$(require_backend_script "window" "count")" || return 1
-  result="$(run_osascript "$backend")"
-  json_ok "$(jq -cn --arg count "$result" '{"count":($count | tonumber)}')"
+  osascript "$BACKEND_SCRIPT" "$@"
 }
 
 main "$@"

@@ -1,30 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMON_SH="$SCRIPT_DIR/../common.sh"
-# shellcheck source=../common.sh
-source "$COMMON_SH"
+# shellcheck source=scripts/commands/_lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/_lib/common.sh"
+
+BACKEND_SCRIPT="$(backend_script "javascript" "run")"
 
 usage() {
-  echo "Usage: scripts/commands/javascript/run.sh <javascript>" >&2
+  echo "Usage: scripts/commands/javascript/run.sh <script> [--window N] [--tab N]" >&2
+  echo "  --window N  target window index (default: front window)" >&2
+  echo "  --tab N     target tab index (default: current tab)" >&2
 }
 
 main() {
-  local backend
-  local script_text="${1:-}"
-  local result
-
-  require_jq || return 1
-  if [[ -z "$script_text" ]]; then
-    usage
-    json_fail "missing javascript" >&2
-    return 1
+  if [[ ! -f "$BACKEND_SCRIPT" ]]; then
+    json_fail "backend script not found: $BACKEND_SCRIPT"
   fi
 
-  backend="$(require_backend_script "javascript" "run")" || return 1
-  result="$(run_osascript "$backend" "$script_text")"
-  json_ok "$(jq -cn --arg result "$result" '{"result":$result}')"
+  osascript "$BACKEND_SCRIPT" "$@"
 }
 
 main "$@"

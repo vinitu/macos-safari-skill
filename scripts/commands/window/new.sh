@@ -4,17 +4,14 @@ set -euo pipefail
 # shellcheck source=scripts/commands/_lib/common.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/_lib/common.sh"
 
-BACKEND_SCRIPT="$(backend_script "window" "list")"
+BACKEND_SCRIPT="$(require_backend_script "window" "new")"
 
 usage() {
-  echo "Usage: scripts/commands/window/list.sh" >&2
+  echo "Usage: scripts/commands/window/new.sh" >&2
+  echo "  Opens a new empty Safari window." >&2
 }
 
 main() {
-  if [[ ! -f "$BACKEND_SCRIPT" ]]; then
-    json_fail "backend script not found: $BACKEND_SCRIPT"
-  fi
-
   osascript "$BACKEND_SCRIPT" "$@"
 }
 

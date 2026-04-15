@@ -1,7 +1,8 @@
 -- Add URL to Reading List. argv: url [previewText] [title]
+-- Returns JSON: {"success":true,"url":"..."}
 on run argv
 	if (count of argv) < 1 then
-		return "Usage: add.applescript <url> [preview] [title]"
+		return "{\"success\":false,\"error\":\"missing url\"}"
 	end if
 	set urlStr to item 1 of argv
 	set previewText to ""
@@ -12,5 +13,7 @@ on run argv
 	tell application "Safari"
 		add reading list item urlStr
 	end tell
-	return "added"
+
+	set safeURL to do shell script "echo " & quoted form of urlStr & " | sed 's/\"/\\\\\"/g'"
+	return "{\"success\":true,\"url\":\"" & safeURL & "\"}"
 end run

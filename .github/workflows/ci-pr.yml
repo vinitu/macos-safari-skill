@@ -16,70 +16,35 @@ concurrency:
 
 jobs:
   lint:
-    name: Lint AppleScript & Shell
+    name: Lint & Test
     runs-on: macos-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Validate repository structure
+      - uses: actions/checkout@v4
+      - name: Validate file structure
         run: |
-          set -euo pipefail
-          for path in \
-            AGENTS.md \
-            LICENSE \
-            README.md \
-            SKILL.md \
-            Makefile \
-            scripts/commands/common.sh \
-            scripts/commands/tab/list.sh \
-            scripts/commands/window/list.sh \
-            scripts/commands/url/open.sh \
-            scripts/applescripts/tab/list.applescript \
-            scripts/applescripts/window/list.applescript \
-            scripts/applescripts/url/open.applescript \
-            tests/dictionary_contract.sh \
-            tests/smoke_safari.sh; do
+          for path in AGENTS.md LICENSE README.md SKILL.md Makefile scripts/commands/tab/list.sh scripts/commands/_lib/common.sh tests/dictionary_contract.sh tests/smoke_safari.sh; do
             [ -f "$path" ] || { echo "::error::Missing $path"; exit 1; }
           done
-
-      - name: Ensure secrets file is not tracked
+      - name: Validate SKILL.md front matter
         run: |
-          set -euo pipefail
-          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
-            echo "::error file=.env::.env must stay untracked"
-            exit 1
+          head -n 1 SKILL.md | grep -q "^---$" || { echo "::error::SKILL.md must start with ---"; exit 1; }
+          grep -q "^name: " SKILL.md || { echo "::error::SKILL.md must have name in front matter"; exit 1; }
+          grep -q "^description: " SKILL.md || { echo "::error::SKILL.md must have description in front matter"; exit 1; }
+      - name: Check for secrets
+        run: |
+          if [ -f .env ]; then
+            echo "::error::.env file should not be committed"; exit 1
           fi
-
-      - name: Check AppleScript syntax
-        run: make compile
-
-      - name: Check shell scripts
+      - name: Shellcheck
         run: |
-          set -euo pipefail
           if command -v shellcheck >/dev/null 2>&1; then
-            find scripts/commands tests -name '*.sh' -exec shellcheck -x -e SC1091 {} +
+            find scripts/commands -name "*.sh" | xargs shellcheck
           else
-            echo "shellcheck not available, skipping"
+            echo "shellcheck not found, skipping"
           fi
-
-      - name: Validate SKILL.md frontmatter
-        run: |
-          set -euo pipefail
-          if ! head -1 SKILL.md | grep -q '^---'; then
-            echo "::error::SKILL.md must start with YAML frontmatter (---)"
-            exit 1
-          fi
-          if ! grep -q '^name:' SKILL.md; then
-            echo "::error::SKILL.md frontmatter must contain 'name:' field"
-            exit 1
-          fi
-          if ! grep -q '^description:' SKILL.md; then
-            echo "::error::SKILL.md frontmatter must contain 'description:' field"
-            exit 1
-          fi
-
-      - name: Run tests
+      - name: Compile validation
+        run: make compile
+      - name: Contract checks
         run: make test
 
   determine_version:
