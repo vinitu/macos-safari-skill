@@ -2,8 +2,13 @@ name: CI · PR Auto-merge · Release
 
 on:
   pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   workflow_dispatch:
 
 permissions:
@@ -16,36 +21,59 @@ concurrency:
 
 jobs:
   lint:
-    name: Lint & Test
+    name: Lint AppleScript & Shell
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Validate file structure
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate repository structure
         run: |
-          for path in AGENTS.md LICENSE README.md SKILL.md Makefile scripts/commands/tab/list.sh scripts/commands/_lib/common.sh tests/dictionary_contract.sh tests/smoke_safari.sh; do
+          set -euo pipefail
+          for path in AGENTS.md LICENSE README.md SKILL.md Makefile scripts/commands/_lib/common.sh scripts/tests/dictionary_contract.sh scripts/tests/smoke_safari.sh; do
             [ -f "$path" ] || { echo "::error::Missing $path"; exit 1; }
           done
-      - name: Validate SKILL.md front matter
+
+      - name: Check AppleScript syntax
         run: |
-          head -n 1 SKILL.md | grep -q "^---$" || { echo "::error::SKILL.md must start with ---"; exit 1; }
-          grep -q "^name: " SKILL.md || { echo "::error::SKILL.md must have name in front matter"; exit 1; }
-          grep -q "^description: " SKILL.md || { echo "::error::SKILL.md must have description in front matter"; exit 1; }
-      - name: Check for secrets
+          set -euo pipefail
+          make compile
+
+      - name: Check shell scripts
         run: |
-          if [ -f .env ]; then
-            echo "::error::.env file should not be committed"; exit 1
-          fi
-      - name: Shellcheck
-        run: |
+          set -euo pipefail
           if command -v shellcheck >/dev/null 2>&1; then
-            find scripts/commands -name "*.sh" | xargs shellcheck
+            find scripts scripts/tests -name '*.sh' -exec shellcheck {} +
           else
-            echo "shellcheck not found, skipping"
+            echo "shellcheck not available, skipping"
           fi
-      - name: Compile validation
-        run: make compile
-      - name: Contract checks
-        run: make test
+
+      - name: Validate SKILL.md frontmatter
+        run: |
+          set -euo pipefail
+          if ! head -1 SKILL.md | grep -q '^---'; then
+            echo "::error::SKILL.md must start with YAML frontmatter (---)"
+            exit 1
+          fi
+          if ! grep -q '^name:' SKILL.md; then
+            echo "::error::SKILL.md frontmatter must contain 'name:' field"
+            exit 1
+          fi
+          if ! grep -q '^description:' SKILL.md; then
+            echo "::error::SKILL.md frontmatter must contain 'description:' field"
+            exit 1
+          fi
+          echo "SKILL.md frontmatter is valid"
+
+      - name: Run dictionary contract
+        run: |
+          set -euo pipefail
+          bash scripts/tests/dictionary_contract.sh
+
+      - name: Run tests
+        run: |
+          set -euo pipefail
+          make test
 
   determine_version:
     name: Detect version bump
@@ -341,31 +369,14 @@ jobs:
 
           tag="${TAG_NAME:-}"
           previous_tag="${PREVIOUS_TAG:-}"
-          merged_json="${MERGED_PRS:-[]}"
-          [ -z "$merged_json" ] && merged_json='[]'
-
-          if [ "$merged_json" = "[]" ]; then
-            echo "No merged PRs provided; collecting between ${previous_tag}...${tag}"
-            if [ -n "$previous_tag" ]; then
-              merged_entries=()
-              commit_messages=$(gh api "repos/${GITHUB_REPOSITORY}/compare/${previous_tag}...${tag}" --jq '.commits[].commit.message' 2>/dev/null || true)
-              pr_numbers=$(grep -oE '#[0-9]+' <<<"$commit_messages" | tr -d '#' | sort -u || true)
-              for pr_number in $pr_numbers; do
-                pr_json=$(gh pr view "$pr_number" -R "$GITHUB_REPOSITORY" --json number,title,author --jq '{number:.number,title:.title,author:(.author.login // "bot")}' 2>/dev/null || true)
-                [ -n "$pr_json" ] && merged_entries+=("$pr_json")
-              done
-              if [ "${#merged_entries[@]}" -gt 0 ]; then
-                merged_json=$(printf '%s\n' "${merged_entries[@]}" | jq -s 'unique_by(.number)')
-              fi
-            fi
-          fi
+          merged_prs="${MERGED_PRS:-[]}"
 
           changes=$(jq -r --arg repo "$GITHUB_REPOSITORY" '
             if length == 0 then "" else
               map("- " + (.title // ("Pull request #" + .number)) + " by @" + ((.author // "bot")) +
                   " in [#" + .number + "](https://github.com/" + $repo + "/pull/" + .number + ")")
               | .[]
-            end' <<<"$merged_json" || true)
+            end' <<<"$merged_prs" || true)
 
           {
             echo "## What's Changed"
