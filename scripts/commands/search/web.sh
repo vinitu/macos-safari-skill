@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-COMMON_SH="$SCRIPT_DIR/../common.sh"
-# shellcheck source=../common.sh
-source "$COMMON_SH"
+# shellcheck source=scripts/commands/_lib/common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../_lib/common.sh"
 
 usage() {
   echo "Usage: scripts/commands/search/web.sh <query>" >&2

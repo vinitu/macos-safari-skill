@@ -1,7 +1,9 @@
 # macOS Safari Skill
 
-This repository provides a skill for automating macOS Safari via AppleScript.
-It exposes a stable public interface via shell scripts that return JSON or plain text.
+This repo stores an AI agent skill for Apple Safari.app on macOS.
+
+The public interface is `scripts/commands`.
+`scripts/applescripts` stores internal AppleScript backends and dictionary-aligned coverage.
 
 ## Installation
 
@@ -15,70 +17,101 @@ Or with [skills.sh](https://skills.sh):
 skills.sh add vinitu/macos-safari-skill
 ```
 
-The package name is `vinitu/macos-safari-skill`. The skill is installed into the `macos-safari-skill` directory in your global skills folder.
-
 ## Prerequisites
 
 - macOS with Safari installed
-- Automation permission granted to your terminal
+- Automation permission granted to your terminal app
 - "Allow JavaScript from Apple Events" enabled in Safari (Develop menu)
 
-## Repository Layout
-- `scripts/commands/`: Public shell wrappers (JSON/text output).
-- `scripts/applescripts/`: Internal AppleScript backends (not for direct use).
-- `tests/`: Automated validation and contract checks.
-- `AGENTS.md`: Detailed guide for AI agents.
-- `SKILL.md`: Detailed command contract and examples.
+## Public Interface
 
-## How To Use
-
-The public interface is located in `scripts/commands/`. All commands should be run from the repository root.
+Run skill actions with:
 
 ```bash
-# Open URL in new tab
-scripts/commands/url/open.sh "https://example.com" new-tab
-
-# Find a tab by URL or title pattern across all windows
-scripts/commands/tab/find.sh "github.com"
-
-# Find and immediately switch to it
-scripts/commands/tab/find.sh "github.com" --focus
-
-# Switch to window 2, tab 3
-scripts/commands/tab/focus.sh 2 3
-
-# List all tabs in all windows (JSON)
-scripts/commands/window/tabs.sh
-
-# List tabs in window 1 only
-scripts/commands/window/tabs.sh 1
-
-# List all open tabs in front window
-scripts/commands/tab/list.sh
-
-# Get URL of current tab
-scripts/commands/tab/url.sh
-
-# Get title of current tab
-scripts/commands/tab/title.sh
-
-# Run JavaScript in current tab
-scripts/commands/javascript/run.sh "document.body.innerText"
+scripts/commands/<entity>/<action>.sh [args...]
 ```
 
-For the full command set and examples, see `SKILL.md`.
+Output rules:
+
+- Commands return JSON by default unless noted otherwise.
+- `--json`, `--plain`, and `--format=plain|json` are not supported.
+
+## Backend Map
+
+- `scripts/commands/tab/*` → AppleScript in `scripts/applescripts/tab/*`
+- `scripts/commands/window/*` → AppleScript in `scripts/applescripts/window/*`
+- `scripts/commands/url/*` → AppleScript in `scripts/applescripts/url/*`
+- `scripts/commands/javascript/*` → AppleScript in `scripts/applescripts/javascript/*`
+- `scripts/commands/reading-list/*` → AppleScript in `scripts/applescripts/reading-list/*`
+- `scripts/commands/bookmarks/*` → AppleScript in `scripts/applescripts/bookmarks/*`
+- `scripts/commands/search/*` → AppleScript in `scripts/applescripts/search/*`
+
+`scripts/applescripts` is internal. Do not call it directly from the skill instructions.
+
+## Command Surface
+
+Tab:
+
+- `scripts/commands/tab/list.sh`
+- `scripts/commands/tab/find.sh`
+- `scripts/commands/tab/focus.sh`
+- `scripts/commands/tab/move.sh`
+- `scripts/commands/tab/reload.sh`
+- `scripts/commands/tab/duplicate.sh`
+- `scripts/commands/tab/screenshot.sh`
+- `scripts/commands/tab/url.sh`
+- `scripts/commands/tab/title.sh`
+- `scripts/commands/tab/source.sh`
+- `scripts/commands/tab/email-contents.sh`
+- `scripts/commands/tab/count.sh`
+- `scripts/commands/tab/close.sh`
+
+Window:
+
+- `scripts/commands/window/list.sh`
+- `scripts/commands/window/new.sh`
+- `scripts/commands/window/focus.sh`
+- `scripts/commands/window/tabs.sh`
+- `scripts/commands/window/count.sh`
+- `scripts/commands/window/close.sh`
+
+URL and navigation:
+
+- `scripts/commands/url/open.sh`
+
+JavaScript:
+
+- `scripts/commands/javascript/run.sh`
+
+Bookmarks and Reading List:
+
+- `scripts/commands/bookmarks/show.sh`
+- `scripts/commands/reading-list/add.sh`
+
+Search:
+
+- `scripts/commands/search/the-web.sh`
+
+## JSON Contract
+
+- Tab object: `{"index":N,"name":"...","url":"..."}`
+- Window object: `{"index":N,"name":"...","tabs_count":N}`
+- Find result: `{"window":N,"tab":N,"name":"...","url":"..."}`
+- Window tabs: `{"window":N,"tabs":[{"index":N,"name":"...","url":"..."}]}`
+- Count: `{"count":N}`
+- Success/Failure: `{"success":true/false,"error":"..."}`
 
 ## Validation
 
-After making changes, run the validation suite from the repo root:
-
 ```bash
-make check    # Verify Safari is available and responding
-make compile  # Syntax check all shell and AppleScript files
-make test     # Run all automated tests (smoke tests and contract checks)
+make compile
+make test
 ```
 
+`make test` runs live checks against Safari.app and expects Safari to be available. `make check` verifies Safari is accessible before running smoke tests.
+
 ## Known Limits
+
 - Safari must be running for most commands to work.
 - TCC permissions (Automation) must be granted to the terminal or parent process.
 - Private windows may have different behavior or restricted access.
