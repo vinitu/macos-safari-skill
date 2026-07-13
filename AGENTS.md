@@ -4,6 +4,12 @@ Use this skill when the task is about Safari on macOS.
 This repository provides a skill for automating macOS Safari via AppleScript.
 It exposes a stable public interface via shell scripts that return JSON or plain text.
 
+## Public interface and internal backend
+
+- `scripts/commands/` is the only public command surface. Run commands from the repo root with paths like `scripts/commands/<entity>/<action>.sh`.
+- `scripts/applescripts/` is the internal backend. Do not call AppleScript files directly from skill instructions.
+- Only commands listed in `SKILL.md` are public. Other scripts may exist for internal use or legacy cleanup.
+
 ## Source of Truth
 - `SKILL.md` is the primary contract for agent interactions.
 - `scripts/commands/` is the only public command surface.
