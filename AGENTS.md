@@ -14,6 +14,8 @@ It exposes a stable public interface via shell scripts that return JSON or plain
 - `SKILL.md` is the primary contract for agent interactions.
 - `scripts/commands/` is the only public command surface.
 - `scripts/applescripts/` is the internal implementation.
+- `make dictionary-safari` / `make dictionary-standard` dump the live Safari.app sdef and the Cocoa standard suite; raw dictionary commands live only in this file and in the `Makefile`.
+- Live checks with `osascript` against Safari.app verify coverage before claiming support.
 
 ## Repository Layout
 - `AGENTS.md`: This guide for AI agents.
@@ -98,7 +100,9 @@ scripts/commands/tab/reload.sh
 
 ## Common Pitfalls
 - Safari must be running for most commands to work.
-- TCC permissions (Automation) must be granted to the terminal or parent process.
+- TCC permissions (Automation) must be granted to the terminal or parent process (System Settings → Privacy & Security → Automation).
+- "Allow JavaScript from Apple Events" must be enabled in Safari's Develop menu for `javascript/run.sh` to work.
+- Reading Safari's History.db or other protected data requires Full Disk Access (System Settings → Privacy & Security → Full Disk Access).
 - Private windows may have different behavior or restricted access.
 - `tab/count.sh` and `window/count.sh` return `{"count":N}` — not a plain number.
 - `tab/close.sh` and `window/close.sh` return `{"success":true}` — not plain text.
@@ -108,3 +112,4 @@ scripts/commands/tab/reload.sh
 - Protect user privacy: do not log or store browsing history or session data.
 - Write actions (close, open, run JS) must be explicit.
 - Internal AppleScript files are not public API.
+- Do not leave temporary data: use the `CodexTest_` prefix for any test-created data (e.g. reading-list entries, bookmarks) and always clean up test tabs and windows opened during smoke tests.

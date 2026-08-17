@@ -43,8 +43,8 @@ jobs:
           fi
       - name: Compile validation
         run: make compile
-      - name: Contract checks
-        run: make test
+      - name: Run dictionary contracts
+        run: bash tests/dictionary_contract.sh
 
   calculate_tag:
     name: Compute next tag

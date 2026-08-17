@@ -12,6 +12,11 @@ usage() {
 }
 
 main() {
+  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    usage
+    exit 0
+  fi
+
   if [[ ! -f "$BACKEND_SCRIPT" ]]; then
     json_fail "backend script not found: $BACKEND_SCRIPT"
   fi

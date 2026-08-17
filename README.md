@@ -17,6 +17,9 @@ Or with [skills.sh](https://skills.sh):
 skills.sh add vinitu/macos-safari-skill
 ```
 
+The installed global skill directory is usually `~/.agents/skills/macos-safari`.
+`skills check` and `skills update` may refer to the upstream package name `macos-safari-skill`.
+
 ## Prerequisites
 
 - macOS with Safari installed

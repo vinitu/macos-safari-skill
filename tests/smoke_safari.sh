@@ -8,6 +8,26 @@ if ! osascript -e 'tell application "Safari" to get name' >/dev/null 2>&1; then
 	exit 0
 fi
 
+# Clean up test tabs/windows opened during the smoke test.
+cleanup() {
+	osascript <<'APPLESCRIPT' >/dev/null 2>&1 || true
+tell application "Safari"
+	repeat with w in windows
+		set tabsToClose to {}
+		repeat with t in tabs of w
+			if URL of t contains "example.com" then
+				copy t to end of tabsToClose
+			end if
+		end repeat
+		repeat with t in tabsToClose
+			close t
+		end repeat
+	end repeat
+end tell
+APPLESCRIPT
+}
+trap cleanup EXIT
+
 # Test public interface
 tab_out="$("$ROOT_DIR/scripts/commands/tab/list.sh" 2>&1)" || { echo "smoke_safari: Safari not running, skipping."; exit 0; }
 printf '%s\n' "$tab_out" >/dev/null || { echo "smoke_safari: tab list failed." >&2; exit 1; }

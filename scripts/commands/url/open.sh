@@ -15,6 +15,11 @@ main() {
     json_fail "backend script not found: $BACKEND_SCRIPT"
   fi
 
+  if [[ $# -eq 0 ]]; then
+    usage
+    json_fail "missing url"
+  fi
+
   osascript "$BACKEND_SCRIPT" "$@"
 }
 
