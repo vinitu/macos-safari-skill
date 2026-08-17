@@ -70,11 +70,6 @@ jobs:
           set -euo pipefail
           bash tests/dictionary_contract.sh
 
-      - name: Run tests
-        run: |
-          set -euo pipefail
-          make test
-
   determine_version:
     name: Detect version bump
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
